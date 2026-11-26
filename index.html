@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>学生教务管理系统</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+    background:#f2f3f5; color:#1a1a1a;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app { max-width:430px; margin:0 auto; min-height:100%; background:#f2f3f5; position:relative; }
+
+  /* 顶部栏 */
+  .navbar {
+    background:#1b4a86; color:#fff;
+    padding:14px 16px 13px; display:flex; align-items:center; gap:10px;
+    position:sticky; top:0; z-index:20;
+  }
+  .back { width:22px; height:22px; position:relative; flex:0 0 22px; cursor:pointer; }
+  .back::before {
+    content:""; position:absolute; left:5px; top:5px;
+    width:10px; height:10px; border-left:2px solid #fff; border-bottom:2px solid #fff;
+    transform:rotate(45deg); border-radius:1px;
+  }
+  .navbar h1 { font-size:16px; font-weight:500; letter-spacing:.5px; flex:1; }
+
+  /* 学期条 */
+  .term {
+    background:#2d5f9e; color:#dbe7f7; font-size:12px;
+    padding:8px 16px; display:flex; justify-content:space-between; align-items:center;
+  }
+  .term b { font-weight:400; color:#fff; }
+
+  /* 学生信息 */
+  .stu {
+    background:#fff; margin:0; padding:14px 16px;
+    display:flex; align-items:center; gap:12px; border-bottom:1px solid #eceef1;
+  }
+  .avatar {
+    width:42px; height:42px; border-radius:50%; background:#e8eef7;
+    display:flex; align-items:center; justify-content:center;
+    font-size:17px; color:#2d5f9e; font-weight:500; flex:0 0 42px;
+  }
+  .stu .info { flex:1; font-size:12.5px; color:#8a9099; line-height:1.7; }
+  .stu .info b { color:#22262c; font-weight:500; font-size:14px; margin-right:8px; }
+
+  /* 区块标题 */
+  .sec-title {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 16px 9px; font-size:13px; color:#6b7280;
+  }
+  .sec-title span.tag { font-size:11px; color:#9aa1ab; }
+
+  /* 表格卡片 */
+  .card { background:#fff; margin:0 12px 12px; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+  .row {
+    display:flex; align-items:center; padding:13px 14px;
+    border-bottom:1px solid #f0f1f3; font-size:13.5px;
+  }
+  .row:last-child { border-bottom:none; }
+  .row .name { flex:1; min-width:0; }
+  .row .name .c { font-size:14px; color:#22262c; }
+  .row .name .m { font-size:11.5px; color:#9aa1ab; margin-top:3px; }
+  .row .score { font-size:19px; font-weight:600; color:#2b3138; width:52px; text-align:right; font-variant-numeric:tabular-nums; }
+  .row .score.fail { color:#d9382e; }
+  .row .flag { font-size:10.5px; color:#d9382e; border:1px solid #f2c4c0; background:#fdf1f0; border-radius:3px; padding:1px 4px; margin-left:7px; vertical-align:2px; }
+
+  /* 汇总 */
+  .summary { background:#fff; margin:0 12px 14px; border-radius:8px; padding:15px 14px; display:flex; }
+  .summary div { flex:1; text-align:center; border-right:1px solid #f0f1f3; }
+  .summary div:last-child { border-right:none; }
+  .summary .n { font-size:20px; font-weight:600; color:#1b4a86; font-variant-numeric:tabular-nums; }
+  .summary .n.warn { color:#d9382e; }
+  .summary .l { font-size:11px; color:#9aa1ab; margin-top:4px; }
+
+  /* 补考安排表 */
+  .paper { background:#fff; margin:12px; padding:20px 18px 26px; border-radius:4px; }
+  .paper h2 { text-align:center; font-size:16px; letter-spacing:2px; margin-bottom:16px; font-weight:600; }
+  .paper .meta { font-size:12.5px; color:#5b626b; line-height:2; margin-bottom:12px; }
+  .paper .meta b { font-weight:500; color:#22262c; }
+  .ptable { width:100%; border-collapse:collapse; font-size:12px; }
+  .ptable th, .ptable td { border:1px solid #c9ced6; padding:8px 6px; text-align:center; line-height:1.5; }
+  .ptable th { background:#f4f6f9; font-weight:500; color:#3c434c; }
+  .paper .note { font-size:11.5px; color:#8a9099; line-height:1.9; margin-top:14px; }
+  .paper .sign { text-align:right; font-size:12px; color:#5b626b; margin-top:18px; }
+
+  /* 底部 */
+  .footer { text-align:center; font-size:11px; color:#b3b8c0; padding:6px 0 26px; line-height:1.9; }
+
+  /* 控制条（拍摄时按 S 或点右下角隐藏/显示） */
+  .ctrl {
+    position:fixed; right:10px; bottom:12px; z-index:50;
+    display:flex; gap:6px;
+  }
+  .ctrl button {
+    border:none; border-radius:14px; padding:7px 12px; font-size:11.5px;
+    background:rgba(27,74,134,.86); color:#fff; font-family:inherit;
+  }
+  .ctrl button.off { background:rgba(0,0,0,.35); }
+  .ctrl.hide { display:none; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ 成绩查询 ============ -->
+  <div id="page-grade">
+    <div class="navbar">
+      <div class="back" onclick="togglePage()"></div>
+      <h1 id="navTitle">成绩查询</h1>
+    </div>
+
+    <div class="term">
+      <span>2025-2026 学年 <b>第一学期</b></span>
+      <span>期末考试</span>
+    </div>
+
+    <div class="stu">
+      <div class="avatar" id="avatar">王</div>
+      <div class="info">
+        <div><b>王力铖</b>学号 2025021437</div>
+        <div>已修学分 20.0　｜　专业排名 —</div>
+      </div>
+    </div>
+
+    <div class="sec-title"><span>课程成绩</span><span class="tag">共 6 门</span></div>
+
+    <div class="card" id="gradeList">
+      <!-- JS 渲染 -->
+    </div>
+
+    <div class="summary">
+      <div><div class="n" id="sumPass">5</div><div class="l">通过门数</div></div>
+      <div><div class="n" id="sumFail">1</div><div class="l">不及格</div></div>
+      <div><div class="n" id="sumAvg">74.3</div><div class="l">平均分</div></div>
+    </div>
+
+    <div class="footer">
+      成绩由任课教师录入，如有疑问请联系开课单位<br>
+      学生教务管理系统　v3.6.2
+    </div>
+  </div>
+
+  <!-- ============ 补考安排表 ============ -->
+  <div id="page-retake" style="display:none;">
+    <div class="navbar">
+      <div class="back" onclick="togglePage()"></div>
+      <h1>补考安排</h1>
+    </div>
+
+    <div class="paper">
+      <h2>补 考 安 排 表</h2>
+      <div class="meta">
+        姓名：<b>王力铖</b>　　学号：<b>114514</b><br>
+        学期：<b>2025-2026 学年 第二学期</b>
+      </div>
+      <table class="ptable">
+        <tr><th>课程名称</th><th>学分</th><th>补考时间</th><th>地点</th></tr>
+        <tr>
+          <td>高等数学（上）</td>
+          <td>5.0</td>
+          <td>2026-02-24<br>09:00—11:00</td>
+          <td>教 3-201</td>
+        </tr>
+      </table>
+      <div class="note">
+        一、请携带学生证、身份证提前 15 分钟入场。<br>
+        二、迟到 15 分钟以上不得入场，开考 30 分钟内不得交卷离场。<br>
+        三、补考成绩按实际得分记，及格线 60 分。<br>
+        四、未按时参加补考者按旷考处理。
+      </div>
+      <div class="sign">教务处　2026 年 2 月</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="ctrl" id="ctrl">
+  <button onclick="setScore(58)">58</button>
+  <button onclick="setScore(71)">71</button>
+  <button onclick="togglePage()">补考表</button>
+  <button onclick="document.getElementById('ctrl').classList.add('hide')">隐藏</button>
+</div>
+
+<script>
+  var HIGHER_MATH = 58;
+
+  var courses = [
+    { name:'高等数学（上）', credit:'5.0', type:'必修', key:'math' },
+    { name:'大学英语（一）', credit:'4.0', type:'必修', score:82 },
+    { name:'计算机基础',     credit:'3.0', type:'必修', score:76 },
+    { name:'大学物理（上）', credit:'4.0', type:'必修', score:71 },
+    { name:'体育（一）',     credit:'1.0', type:'必修', score:88 },
+    { name:'思想道德与法治', credit:'3.0', type:'必修', score:79 }
+  ];
+
+  function render() {
+    var box = document.getElementById('gradeList');
+    box.innerHTML = '';
+    var fail = 0, sum = 0, n = 0;
+
+    courses.forEach(function(c){
+      var s = c.key === 'math' ? HIGHER_MATH : c.score;
+      var isFail = s < 60;
+      sum += s; n++;
+      if (isFail) fail++;
+
+      var div = document.createElement('div');
+      div.className = 'row';
+      div.innerHTML =
+        '<div class="name">' +
+          '<div class="c">' + c.name + (isFail ? '<span class="flag">不及格</span>' : '') + '</div>' +
+          '<div class="m">学分 ' + c.credit + '　·　' + c.type + '</div>' +
+        '</div>' +
+        '<div class="score' + (isFail ? ' fail' : '') + '">' + s + '</div>';
+      box.appendChild(div);
+    });
+
+    document.getElementById('sumPass').textContent = (n - fail);
+    document.getElementById('sumFail').textContent = fail;
+    document.getElementById('sumAvg').textContent  = (sum / n).toFixed(1);
+    document.getElementById('sumFail').className = 'n' + (fail > 0 ? ' warn' : '');
+  }
+
+  function setScore(v) {
+    HIGHER_MATH = v;
+    render();
+    var u = new URL(location.href); u.searchParams.set('score', v); history.replaceState(null,'',u);
+  }
+
+  function togglePage() {
+    var g = document.getElementById('page-grade');
+    var r = document.getElementById('page-retake');
+    var showingGrade = g.style.display !== 'none';
+    g.style.display = showingGrade ? 'none' : 'block';
+    r.style.display = showingGrade ? 'block' : 'none';
+    document.getElementById('navTitle').textContent = showingGrade ? '补考安排' : '成绩查询';
+    window.scrollTo(0,0);
+  }
+
+  // 地址栏参数：?score=71  或  ?page=retake
+  (function init(){
+    var p = new URLSearchParams(location.search);
+    if (p.get('score')) HIGHER_MATH = parseInt(p.get('score'), 10) || 58;
+    render();
+    if (p.get('page') === 'retake') togglePage();
+    document.getElementById('avatar').textContent = '王';
+  })();
+
+  // 键盘：1 = 58，2 = 71，3 = 补考表，H = 隐藏控制条
+  document.addEventListener('keydown', function(e){
+    if (e.key === '1') setScore(58);
+    if (e.key === '2') setScore(71);
+    if (e.key === '3') togglePage();
+    if (e.key.toLowerCase() === 'h') document.getElementById('ctrl').classList.toggle('hide');
+  });
+</script>
+</body>
+</html>
